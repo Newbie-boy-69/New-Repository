@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+      <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>MealMate: Meal Planning &amp; Food Reservation</title>
+    <style>
+      :root{--bg:#fbf7f1;--card:#fff;--ink:#2b2622;--mute:#7a7068;--line:#eadfd2;--brand:#e2622b;--brand-d:#c24f1e;--ok:#2e8b57;--warn:#c98a00;--bad:#c0392b;--r:14px;--soft:#f7efe5}
+      *{box-sizing:border-box}
+
+  body   
+  
+  {margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+h1,h2,h3{margin:0 0 .5rem}h2{font-size:1.35rem}h3{font-size:1.05rem}
+button,input,select,textarea{font:inherit}
+header.top{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between;padding:.8rem 1.25rem;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{font-weight:800;font-size:1.25rem;color:var(--brand)}
+nav{display:flex;gap:.25rem;flex-wrap:wrap}
+nav button{background:none;border:0;padding:.5rem .9rem;border-radius:999px;cursor:pointer;color:var(--mute);font-weight:600}
+nav button.on{background:var(--brand);color:#fff}
+.who{display:flex;gap:.6rem;align-items:center;font-size:.9rem;color:var(--mute)}
+main{max-width:1100px;margin:0 auto;padding:1.25rem}
+.bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.filters{display:flex;gap:.5rem;flex-wrap:wrap}
+input,select,textarea{padding:.55rem .7rem;border:1px solid var(--line);border-radius:10px;background:var(--card);width:100%}
+.filters input,.filters select{width:auto}
+label{display:block;font-size:.85rem;font-weight:600;margin:.7rem 0 .25rem}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:.55rem 1rem;cursor:pointer;font-weight:600}
+.btn:hover{background:var(--brand-d)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}.btn.ghost:hover{background:var(--soft)}
+.btn.danger{background:var(--bad)}.btn.sm{padding:.3rem .65rem;font-size:.82rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem;display:flex;flex-direction:column;gap:.35rem}
+.card .row{margin-top:auto;display:flex;gap:.5rem;flex-wrap:wrap;padding-top:.5rem}
+.price{font-weight:800;color:var(--brand)}.mute{color:var(--mute);font-size:.88rem}
+.pill{display:inline-block;padding:.12rem .6rem;border-radius:999px;font-size:.76rem;font-weight:700;background:#eee;color:#555}
+.pill.Pending,.pill.low{background:var(--card)3d6;color:var(--warn)}.pill.Confirmed,.pill.Ready,.pill.ok{background:#dff3e7;color:var(--ok)}
+.pill.Completed{background:#e3ecf9;color:#2d5fa8}.pill.Declined,.pill.Cancelled,.pill.out{background:#f9dedb;color:var(--bad)}
+.tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{padding:.65rem .8rem;text-align:left;border-bottom:1px solid var(--line);font-size:.9rem;vertical-align:middle}
+th{background:var(--soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+tr:last-child td{border-bottom:0}
+.acts{display:flex;gap:.35rem;flex-wrap:wrap}
+.planner td{min-width:120px}.planner td.slot{background:var(--card)af4}
+.cell{display:flex;flex-direction:column;gap:.25rem;font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.25rem}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem}
+.stat b{font-size:1.7rem;display:block;color:var(--brand)}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--mute);background:var(--card);border:1px dashed var(--line);border-radius:var(--r)}
+.auth{max-width:420px;margin:6vh auto;padding:0 1rem}
+.auth .card{padding:1.5rem}.auth .brand{font-size:1.8rem;text-align:center;display:block}
+.tabs{display:flex;gap:.4rem;margin:1rem 0 .5rem}.tabs button{flex:1}
+.hint{font-size:.8rem;color:var(--mute);background:var(--soft);border-radius:10px;padding:.6rem .8rem;margin-top:1rem}
+.err{color:var(--bad);font-size:.85rem;margin:.5rem 0 0;min-height:1.1em}
+.modal-wrap{position:fixed;inset:0;background:rgba(30,20,10,.45);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:20}
+.modal-wrap[hidden]{display:none}
+.modal{background:var(--card);border-radius:var(--r);padding:1.25rem;width:100%;max-width:440px;max-height:90vh;overflow:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.end{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem}
+#toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:.6rem 1.1rem;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:30}
+#toast.show{opacity:1}
+@media (max-width:600px){main{padding:.8rem}.two{grid-template-columns:1fr}}
+
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#1c1814;--card:#262019;--ink:#f3ebe2;--mute:#a69a8e;--line:#3a3128;--soft:#2f2820}
+.pill{background:#3a3128;color:#ddd}.pill.Pending,.pill.low{background:#4a3a12;color:#f0c24a}.pill.Confirmed,.pill.Ready,.pill.ok{background:#17402a;color:#6fd39b}
+.pill.Completed{background:#1b3358;color:#8db4ee}.pill.Declined,.pill.Cancelled,.pill.out{background:#4d211c;color:#f08a7e}}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" class="modal-wrap" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* MealMate front end (HTML + CSS + JavaScript).
+   Data is kept in localStorage as a stand-in for the Laravel + MySQL back end.
+   Every place that should become an API call is marked with "API:". */
+'use strict';
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],SLOTS=['Breakfast','Lunch','Dinner'];
+const CATS=['Breakfast','Lunch','Dinner','Snacks','Drinks'];
+const STATUSES=['Pending','Confirmed','Ready','Completed','Declined','Cancelled'];
+const TABS={customer:[['menu','Menu'],['plan','Meal Plan'],['res','My Reservations']],
+  provider:[['listings','Food Listings'],['incoming','Reservations']],
+  admin:[['overview','Overview'],['users','Users'],['records','Reservation Records']]};
+const TIMES=[];for(let h=7;h<=20;h++){TIMES.push(String(h).padStart(2,'0')+':00');if(h<20)TIMES.push(String(h).padStart(2,'0')+':30')}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const peso=n=>'₱'+Number(n).toFixed(2);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+
+/* ---------- data layer (API: replace with fetch() calls to Laravel) ---------- */
+function seed(){
+  const d={users:[
+    {id:'u1',name:'Admin',email:'admin@mealmate.test',password:'admin123',role:'admin',active:true},
+    {id:'u2',name:'Campus Canteen',email:'canteen@mealmate.test',password:'canteen123',role:'provider',active:true},
+    {id:'u3',name:'Juan Dela Cruz',email:'juan@mealmate.test',password:'juan123',role:'customer',active:true}],
+    meals:[],reservations:[],plans:{}};
+  [['Chicken Adobo Rice','Lunch','Braised chicken in soy-vinegar sauce with steamed rice.',75,20],
+   ['Tapsilog','Breakfast','Beef tapa, garlic rice and fried egg.',70,15],
+   ['Pancit Canton','Lunch','Stir-fried noodles with vegetables and pork.',60,12],
+   ['Sinigang na Baboy','Dinner','Pork in sour tamarind broth with vegetables.',90,10],
+   ['Banana Cue (3pcs)','Snacks','Caramelized fried saba bananas.',25,30],
+   ['Iced Tea','Drinks','Freshly brewed, lightly sweetened.',20,40],
+   ['Longsilog','Breakfast','Sweet native sausage, garlic rice and egg.',65,0],
+   ['Fried Chicken Meal','Dinner','Crispy chicken, rice and gravy.',85,18]]
+   .forEach(([name,category,description,price,stock])=>d.meals.push({id:uid(),providerId:'u2',name,category,description,price,stock,available:true}));
+  d.reservations.push({id:uid(),userId:'u3',providerId:'u2',mealId:d.meals[0].id,mealName:d.meals[0].name,price:75,qty:1,date:today(),time:'12:00',notes:'',status:'Pending',created:Date.now()});
+  return d;
+}
+let db=null;try{db=JSON.parse(localStorage.getItem('mm_db'))}catch(e){}
+if(!db||!db.users)db=seed();
+const save=()=>{try{localStorage.setItem('mm_db',JSON.stringify(db))}catch(e){}};
+save();
+let me=null,tab='',filters={q:'',cat:''};
+let mysqlUsers=[];
+
+const meal=id=>db.meals.find(m=>String(m.id)===String(id));
+const user=id=>db.users.find(u=>u.id===id);
+const isOpen=m=>m.available&&m.stock>0;
+const live=r=>!['Declined','Cancelled'].includes(r.status);
+async function loadMealsFromMySQL() {
+  try {
+    const response = await fetch('/meals', {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to load meals.');
+    }
+
+    db.meals = (data.meals || []).map(m => ({
+      id: m.id,
+      providerId: m.provider_id,
+      providerName: m.provider?.name || 'Provider',
+      name: m.name,
+      category: m.category,
+      description: m.description || '',
+      price: Number(m.price),
+      stock: Number(m.stock),
+      available: Boolean(m.available)
+    }));
+
+  } catch (error) {
+    console.error(error);
+    toast('Could not load meals from MySQL.');
+  }
+}
+
+async function loadReservationsFromMySQL() {
+  try {
+    const response = await fetch('/reservations', {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to load reservations.');
+    }
+
+    db.reservations = (data.reservations || []).map(r => ({
+      id: r.id,
+      userId: r.customer_id,
+      providerId: r.provider_id,
+      mealId: r.meal_id,
+      mealName: r.meal_name,
+      price: Number(r.price),
+      qty: Number(r.quantity),
+      date: String(r.reservation_date).slice(0, 10),
+      time: String(r.reservation_time).slice(0, 5),
+      notes: r.notes || '',
+      status: r.status,
+      created: new Date(r.created_at).getTime(),
+      studentName: r.student_name,
+      studentEmail: r.student_email,
+      customer: r.customer,
+      provider: r.provider
+    }));
+
+  } catch (error) {
+    console.error(error);
+    toast('Could not load reservations from MySQL.');
+  }
+}
+
+async function loadAdminUsers(){
+  try {
+    const response = await fetch('/admin/users', {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to load users.');
+    }
+
+    mysqlUsers = (data.users || []).map(u => ({
+      ...u,
+      active: Boolean(u.is_active)
+    }));
+
+  } catch (error) {
+    console.error(error);
+    toast('Could not load users from MySQL.');
+    mysqlUsers = [];
+  }
+}
+
+/* ---------- ui helpers ---------- */
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2300)}
+function openModal(title,body){$('#modal').innerHTML=`<div class="modal" role="dialog" aria-modal="true"><h3>${esc(title)}</h3>${body}</div>`;$('#modal').hidden=false}
+const closeModal=()=>{$('#modal').hidden=true;$('#modal').innerHTML=''};
+const opts=(arr,sel)=>arr.map(v=>`<option ${v===sel?'selected':''}>${esc(v)}</option>`).join('');
+const pill=s=>`<span class="pill ${esc(s)}">${esc(s)}</span>`;
+const empty=t=>`<div class="empty">${t}</div>`;
+const table=(head,rows)=>`<div class="tablewrap"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+const btn=(act,label,data='',cls='ghost sm')=>`<button class="btn ${cls}" data-act="${act}" ${data}>${label}</button>`;
+
+/* ---------- auth ---------- */
+function authView(mode='login'){
+  return `<div class="auth"><span class="brand">🍽️ MealMate</span><p class="mute" style="text-align:center">Plan your meals. Reserve your food.</p>
+  <div class="card"><div class="tabs">${btn('authmode','Log in','data-m="login"',mode==='login'?'':'ghost')}${btn('authmode','Create account','data-m="register"',mode==='register'?'':'ghost')}</div>
+  <form data-form="${mode}" novalidate>
+  ${mode==='register'?`<label>Full name / business name</label><input name="name" required>`:''}
+  <label>Email</label><input name="email" type="email" required>
+  <label>Password</label><input name="password" type="password" required minlength="6">
+  ${mode==='register'?`<label>I am a</label><select name="role"><option value="customer">Customer (student, employee, individual)</option><option value="provider">Food service provider</option></select>`:''}
+  <p class="err" id="autherr"></p><button class="btn" style="width:100%">${mode==='login'?'Log in':'Sign up'}</button></form>
+  ${mode==='login'?`<div class="hint"><b>Demo accounts</b><br>Customer: juan@mealmate.test / juan123<br>Provider: canteen@mealmate.test / canteen123<br>Admin: admin@mealmate.test / admin123</div>`:''}</div></div>`;
+}
+const forms={
+  
+
+async login(f) {
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        email: f.get('email').trim().toLowerCase(),
+        password: f.get('password')
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = data.errors
+        ? Object.values(data.errors).flat()[0]
+        : data.message || 'Login failed.';
+      return authErr(message);
+    }
+
+    const u = {
+      ...data.user,
+      active: data.user.is_active
+    };
+
+    await startSession(u);
+
+  } catch (error) {
+    console.error(error);
+    authErr('Unable to connect to the server. Please try again.');
+  }
+},
+
+
+  async register(f) {
+    try {
+      const response = await fetch('/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          name: f.get('name').trim(),
+          email: f.get('email').trim().toLowerCase(),
+          password: f.get('password'),
+          role: f.get('role')
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = data.errors
+          ? Object.values(data.errors).flat()[0]
+          : data.message || 'Registration failed.';
+        return authErr(message);
+      }
+
+      const u = {
+        ...data.user,
+        active: data.user.is_active
+      };
+
+      startSession(u);
+    } catch (error) {
+      authErr('Unable to connect to the server. Please try again.');
+    }
+  },
+
+  
+  async reserve(f) {
+    try {
+      const response = await fetch('/reservations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          meal_id: f.get('mealId'),
+          quantity: Number(f.get('qty')),
+          reservation_date: f.get('date'),
+          reservation_time: f.get('time'),
+          notes: f.get('notes').trim()
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message = data.errors
+          ? Object.values(data.errors).flat()[0]
+          : data.message || 'Reservation failed.';
+
+        return modalErr(message);
+      }
+
+      await loadMealsFromMySQL();
+      await loadReservationsFromMySQL();
+
+      closeModal();
+      render();
+      toast('Reservation submitted successfully!');
+
+    } catch (error) {
+      console.error(error);
+      modalErr('Unable to submit reservation. Please try again.');
+    }
+  },
+
+  plan(f){ // API: PUT /meal-plans
+    (db.plans[me.id]??={})[f.get('day')+'|'+f.get('slot')]=f.get('mealId');save();closeModal();toast('Added to your meal plan');render()},
+  listing(f){ // API: POST/PUT /meals
+    const name=f.get('name').trim(),price=parseFloat(f.get('price')),stock=parseInt(f.get('stock'),10);
+    if(!name||!(price>=0)||!(stock>=0))return modalErr('Enter a name, a valid price and stock.');
+    const data={name,category:f.get('category'),description:f.get('description').trim(),price,stock},id=f.get('id');
+    if(id)Object.assign(meal(id),data);else db.meals.push({id:uid(),providerId:me.id,available:true,...data});
+    save();closeModal();toast('Listing saved');render()}
+};
+function authErr(t){$('#autherr').textContent=t}
+function modalErr(t){const e=$('#modal .err');if(e)e.textContent=t}
+async function startSession(u){
+  me = u;
+  tab = TABS[u.role][0][0];
+
+  await loadMealsFromMySQL();
+  await loadReservationsFromMySQL();
+
+  render();
+}
+
+async function restoreSession(){
+  try {
+    const response = await fetch('/me', {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin'
+    });
+
+    if (!response.ok) {
+      throw new Error('No active session');
+    }
+
+    const data = await response.json();
+    startSession(data.user);
+
+  } catch (error) {
+    me = null;
+    render();
+  }
+}
+
+/* ---------- views ---------- */
+const views={
+ menu(){
+  const q=filters.q.toLowerCase(),list=db.meals.filter(m=>m.available!==undefined&&(!filters.cat||m.category===filters.cat)&&(m.name+m.description).toLowerCase().includes(q));
+  return `<div class="bar"><h2>Food Menu</h2><div class="filters"><input id="q" placeholder="Search meals…" value="${esc(filters.q)}"><select id="cat"><option value="">All categories</option>${opts(CATS,filters.cat)}</select></div></div>`+
+  (list.length?`<div class="grid">${list.map(m=>{const ok=isOpen(m);
+   return `<div class="card"><div style="display:flex;justify-content:space-between;gap:.5rem"><h3>${esc(m.name)}</h3><span class="price">${peso(m.price)}</span></div>
+     <span class="mute">${esc(m.category)} · ${esc(m.providerName||'Provider')}</span><p style="margin:.2rem 0">${esc(m.description)}</p>
+   <div>${!ok?'<span class="pill out">Unavailable</span>':m.stock<=5?`<span class="pill low">Only ${m.stock} left</span>`:`<span class="pill ok">Available · ${m.stock}</span>`}</div>
+   <div class="row">${btn('reserve','Reserve',`data-id="${m.id}" ${ok?'':'disabled'}`,'')}${btn('addplan','Add to plan',`data-id="${m.id}"`)}</div></div>`}).join('')}</div>`:empty('No meals match your search.'));
+ },
+ plan(){
+  const p=db.plans[me.id]||{};
+  return `<div class="bar"><h2>Weekly Meal Plan</h2><span class="mute">Plan ahead, then reserve straight from your plan.</span></div>
+  ${table(['Meal',...DAYS],SLOTS.map(s=>`<tr><td class="slot"><b>${s}</b></td>${DAYS.map(d=>{const m=meal(p[d+'|'+s]);
+   return `<td>${m?`<div class="cell"><b>${esc(m.name)}</b><span class="mute">${peso(m.price)}</span><div class="acts">${btn('reserve','Reserve',`data-id="${m.id}" ${isOpen(m)?'':'disabled'}`)}${btn('unplan','✕',`data-k="${d}|${s}" title="Remove"`)}</div></div>`
+   :btn('addslot','+ Add',`data-d="${d}" data-s="${s}"`)}</td>`}).join('')}</tr>`))}`;
+ },
+ res(){
+  const rs=db.reservations.filter(r=>r.userId===me.id).sort((a,b)=>b.created-a.created);
+  return `<div class="bar"><h2>My Reservations</h2></div>`+(rs.length?table(['Meal','Qty','Date','Time','Total','Status',''],rs.map(r=>
+   `<tr><td><b>${esc(r.mealName)}</b><div class="mute">${esc(user(r.providerId)?.name||'')}${r.notes?' · '+esc(r.notes):''}</div></td><td>${r.qty}</td><td>${r.date}</td><td>${r.time}</td><td>${peso(r.price*r.qty)}</td><td>${pill(r.status)}</td>
+   <td>${r.status==='Pending'?btn('cancel','Cancel',`data-id="${r.id}"`):''}</td></tr>`)):empty('No reservations yet. Browse the menu to reserve a meal.'));
+ },
+ listings(){
+  const ms=db.meals.filter(m=>String(m.providerId)===String(me.id));
+  return `<div class="bar"><h2>My Food Listings</h2>${btn('editlist','+ Add food','','')}</div>`+(ms.length?table(['Food','Category','Price','Stock','Availability',''],ms.map(m=>
+   `<tr><td><b>${esc(m.name)}</b><div class="mute">${esc(m.description)}</div></td><td>${esc(m.category)}</td><td>${peso(m.price)}</td><td>${m.stock}</td>
+   <td>${isOpen(m)?'<span class="pill ok">Available</span>':'<span class="pill out">Unavailable</span>'}</td>
+   <td><div class="acts">${btn('toggle','Toggle',`data-id="${m.id}"`)}${btn('editlist','Edit',`data-id="${m.id}"`)}${btn('dellist','Delete',`data-id="${m.id}"`,'danger sm')}</div></td></tr>`)):empty('You have no listings yet.'));
+ },
+ incoming(){
+  const rs=db.reservations.filter(r=>r.providerId===me.id).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const next={Pending:['Confirmed','Declined'],Confirmed:['Ready'],Ready:['Completed']};
+  return `<div class="bar"><h2>Customer Reservations</h2><span class="mute">${rs.filter(r=>r.status==='Pending').length} pending</span></div>`+(rs.length?table(['Customer','Meal','Qty','Date & time','Status','Update'],rs.map(r=>
+   `<tr><td>${esc(user(r.userId)?.name||'Unknown')}</td><td><b>${esc(r.mealName)}</b>${r.notes?`<div class="mute">${esc(r.notes)}</div>`:''}</td><td>${r.qty}</td><td>${r.date} ${r.time}</td><td>${pill(r.status)}</td>
+   <td><div class="acts">${(next[r.status]||[]).map(s=>btn('setstatus',s,`data-id="${r.id}" data-s="${s}"`,s==='Declined'?'danger sm':'sm')).join('')||'<span class="mute">—</span>'}</div></td></tr>`)):empty('No reservations received yet.'));
+ },
+ overview(){
+  const c=r=>db.users.filter(u=>u.role===r).length,rs=db.reservations;
+  return `<h2>System Overview</h2><div class="stats">${[['Customers',c('customer')],['Providers',c('provider')],['Food items',db.meals.length],['Reservations',rs.length],['Pending',rs.filter(r=>r.status==='Pending').length]].map(([l,v])=>`<div class="stat"><b>${v}</b>${l}</div>`).join('')}</div>`;
+ },
+ users(){
+  return `<div class="bar"><h2>User Accounts</h2></div>`+
+  table(['Name','Email','Role','Status',''],mysqlUsers.map(u=>
+   `<tr><td><b>${esc(u.name)}</b></td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${u.active?'<span class="pill ok">Active</span>':'<span class="pill out">Deactivated</span>'}</td>
+   <td>${u.role==='admin'?'':`<div class="acts">${btn('useractive',u.active?'Deactivate':'Activate',`data-id="${u.id}"`)}${btn('deluser','Delete',`data-id="${u.id}"`,'danger sm')}</div>`}</td></tr>`));
+},
+ records(){
+  const rs=[...db.reservations].sort((a,b)=>b.created-a.created);
+  return `<div class="bar"><h2>Reservation Records</h2></div>`+(rs.length?table(['Customer','Provider','Meal','Qty','Date & time','Status'],rs.map(r=>
+   `<tr><td>${esc(user(r.userId)?.name||'Deleted user')}</td><td>${esc(user(r.providerId)?.name||'—')}</td><td>${esc(r.mealName)}</td><td>${r.qty}</td><td>${r.date} ${r.time}</td><td>${pill(r.status)}</td></tr>`)):empty('No records.'));
+ }
+};
+
+function render(){
+  const app=$('#app');
+  if(!me){app.innerHTML=authView(render.mode);return}
+  const tabs=TABS[me.role];if(!tabs.some(t=>t[0]===tab))tab=tabs[0][0];
+  app.innerHTML=`<header class="top"><span class="brand">🍽️ MealMate</span><nav>${tabs.map(([k,l])=>`<button data-act="tab" data-t="${k}" class="${k===tab?'on':''}">${l}</button>`).join('')}</nav>
+  <div class="who"><span>${esc(me.name)} · ${me.role}</span>${btn('logout','Log out')}</div></header><main>${views[tab]()}</main>`;
+}
+
+/* ---------- actions ---------- */
+const reserveTimes=()=>opts(TIMES,'12:00');
+const A={
+ authmode(d){render.mode=d.m;render()},
+ tab: async function(d){
+  tab = d.t;
+
+  if(me?.role === 'admin' && tab === 'users'){
+    await loadAdminUsers();
+  }
+
+  render();
+},
+ logout(){me=null;try{localStorage.removeItem('mm_me')}catch(e){}render.mode='login';render()},
+ logout(){me=null;try{localStorage.removeItem('mm_me')}catch(e){}render.mode='login';render()},
+ reserve(d){const m=meal(d.id);openModal('Reserve: '+m.name,`<form data-form="reserve"><input type="hidden" name="mealId" value="${m.id}">
+  <p class="mute">${peso(m.price)} each · ${m.stock} available</p><div class="two"><div><label>Date</label><input type="date" name="date" min="${today()}" value="${today()}" required></div>
+  <div><label>Time</label><select name="time">${reserveTimes()}</select></div></div><label>Quantity</label><input type="number" name="qty" min="1" max="${m.stock}" value="1" required>
+  <label>Notes (optional)</label><textarea name="notes" rows="2" maxlength="200" placeholder="e.g. no onions"></textarea><p class="err"></p>
+  <div class="end">${btn('close','Cancel')}<button class="btn">Submit reservation</button></div></form>`)},
+ addplan(d){planModal(d.id)},
+ addslot(d){planModal('',d.d,d.s)},
+ unplan(d){delete db.plans[me.id][d.k];save();render()},
+ cancel(d){const r=db.reservations.find(x=>x.id===d.id);if(r?.status==='Pending'&&confirm('Cancel this reservation?')){setStatus(r,'Cancelled');toast('Reservation cancelled')}},
+ setstatus(d){const r=db.reservations.find(x=>x.id===d.id);setStatus(r,d.s);toast('Marked as '+d.s)},
+ toggle(d){const m=meal(d.id);m.available=!m.available;save();render()},
+ editlist(d){const m=d.id?meal(d.id):{name:'',category:'Lunch',description:'',price:'',stock:10};
+  openModal(d.id?'Edit food':'Add food',`<form data-form="listing"><input type="hidden" name="id" value="${d.id||''}"><label>Name</label><input name="name" value="${esc(m.name)}" required>
+  <label>Category</label><select name="category">${opts(CATS,m.category)}</select><label>Description</label><textarea name="description" rows="2">${esc(m.description)}</textarea>
+  <div class="two"><div><label>Price (₱)</label><input name="price" type="number" min="0" step="0.01" value="${m.price}" required></div><div><label>Stock</label><input name="stock" type="number" min="0" value="${m.stock}" required></div></div>
+  <p class="err"></p><div class="end">${btn('close','Cancel')}<button class="btn">Save</button></div></form>`)},
+ dellist(d){if(confirm('Delete this listing? Existing reservations are kept.')){db.meals=db.meals.filter(m=>m.id!==d.id);save();render()}},
+
+async useractive(d) {
+  const u = mysqlUsers.find(u => String(u.id) === String(d.id));
+  if (!u) return;
+
+  const nextStatus = !u.active;
+
+  try {
+    const response = await fetch(`/admin/users/${u.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        is_active: nextStatus
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to update user status.');
+    }
+
+    u.active = nextStatus;
+    render();
+    toast(data.message || 'User status updated!');
+  } catch (error) {
+    console.error(error);
+    toast(error.message);
+  }
+},
+
+async deluser(d) {
+  const u = mysqlUsers.find(u => String(u.id) === String(d.id));
+  if (!u) return;
+
+  if (!confirm(`Delete ${u.name}'s account from MySQL?`)) return;
+
+  try {
+    const response = await fetch(`/admin/users/${u.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      },
+      credentials: 'same-origin'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to delete user.');
+    }
+
+    mysqlUsers = mysqlUsers.filter(user => String(user.id) !== String(u.id));
+
+    render();
+    toast(data.message || 'User deleted successfully!');
+  } catch (error) {
+    console.error(error);
+    toast(error.message);
+  }
+},
+close:closeModal
+};
+function setStatus(r,s){ // API: PATCH /reservations/{id}
+  if(['Declined','Cancelled'].includes(s)&&live(r)){const m=meal(r.mealId);if(m)m.stock+=r.qty}
+  r.status=s;save();render()}
+function planModal(mealId='',day=DAYS[0],slot=SLOTS[1]){
+  const ms=db.meals.filter(isOpen);
+  openModal('Add to meal plan',`<form data-form="plan"><label>Meal</label><select name="mealId">${ms.map(m=>`<option value="${m.id}" ${m.id===mealId?'selected':''}>${esc(m.name)} (${peso(m.price)})</option>`).join('')}</select>
+  <div class="two"><div><label>Day</label><select name="day">${opts(DAYS,day)}</select></div><div><label>Meal time</label><select name="slot">${opts(SLOTS,slot)}</select></div></div>
+  <div class="end">${btn('close','Cancel')}<button class="btn">Add</button></div></form>`)}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  if(e.target.id==='modal')return closeModal();
+  const el=e.target.closest('[data-act]');if(el&&!el.disabled&&A[el.dataset.act])A[el.dataset.act](el.dataset)});
+document.addEventListener('submit',e=>{
+  const n=e.target.dataset.form;if(!n)return;e.preventDefault();forms[n](new FormData(e.target))});
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'){filters.q=e.target.value;const p=e.target.selectionStart;render();const q=$('#q');q.focus();q.setSelectionRange(p,p)}});
+document.addEventListener('change',e=>{if(e.target.id==='cat'){filters.cat=e.target.value;render()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+render();
+
+</script>
+</body>
+</html>
+
